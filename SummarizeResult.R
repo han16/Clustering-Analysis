@@ -31,5 +31,3 @@ smmy[,4]=c(sd(sub_spec[,1], na.rm=T), sd(sub_spec[,2], na.rm=T), sd(sub_spec[,3]
            sd(alle_spec[,3], na.rm=T), sd(alle_spec[,4], na.rm=T))
 colnames(smmy)=c("Sens_mean", "Sens_SD", "Spec_mean", "Spec_SD")
 rownames(smmy)=c("Sub_clust1", "Sub_clust2", "Sub_clust3", "Alle_clust11", "Alle_clust12", "Alle_clust21", "Alle_clust22")
-library(knitr)
-
