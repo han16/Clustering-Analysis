@@ -1,13 +1,4 @@
-#denovo=read.table("C:\\Users\\han\\Dropbox\\StatisticalGenetics\\TADA_SNV_CNV_combined_Feb7.txt", header=T)
-#order.denovo=denovo[order(denovo$BF.SNV.dn, decreasing=T),]
-#order.BF=BF.gene[order(BF.gene$BF, decreasing=T),]
-#top20=order.BF[1:20,]
-#top20gene=as.character(top20$Gene)
-#top20.rank.denovo=which(order.denovo$RefSeqName%in% top20gene)
-#all.rank.denovo=which(order.denovo$RefSeqName%in%BF.gene$Gene )
-
-
-
+# Combing each result of 20 replicates and get summary statistics of sensitivity and specificity. 
 ###############################
 sub_sens=0; sub_spec=0
 alle_sens=0; alle_spec=0
@@ -41,6 +32,4 @@ smmy[,4]=c(sd(sub_spec[,1], na.rm=T), sd(sub_spec[,2], na.rm=T), sd(sub_spec[,3]
 colnames(smmy)=c("Sens_mean", "Sens_SD", "Spec_mean", "Spec_SD")
 rownames(smmy)=c("Sub_clust1", "Sub_clust2", "Sub_clust3", "Alle_clust11", "Alle_clust12", "Alle_clust21", "Alle_clust22")
 library(knitr)
-kable(smmy, caption="Sample size 400, 20 allergen")
-kable(round(smmy,4), caption="Sample size 400, 20 allergen", format="latex")
 
