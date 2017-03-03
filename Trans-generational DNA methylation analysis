@@ -1,0 +1,380 @@
+rm(list=ls())
+start.time=date()
+cat("program starts at", date(),"\n\n")
+ptm <- proc.time()
+library(car)
+library(Rsolnp)
+##################################################
+h_func=function(opt.para)
+{
+   exp.mu.cluster=cluster.data[[1]]      # parameter initials for newton raphson
+   alpha.cluster=cluster.data[[2]]       # alpha & beta are 3 * J_0 matrix with row of order moth, fath, child
+   beta.cluster=cluster.data[[3]]
+   gamma.cluster=cluster.data[[4]]
+   site.index=cluster.data[[5]]
+   num.site=length(site.index)
+   moth.beta=beta.cluster[1,]
+   fath.beta=beta.cluster[2,]
+  # opt.para[1]=0
+   child.beta=(alpha.cluster[3,]/exp(opt.para[1]))*(moth.beta/alpha.cluster[1,])^(opt.para[2])*(fath.beta/alpha.cluster[2,])^(opt.para[3])
+   ##############  objective function ########################
+  objec.func=0
+  for (i in 1:no.sub)
+   for (j in 1:num.site)
+     {
+      moth.part=(alpha.cluster[1,j]-1)*log(moth.data[i,site.index[j]])+(moth.beta[j]-1)*log(1-(moth.data[i,site.index[j]]))-lbeta(alpha.cluster[1,j], moth.beta[j])
+      fath.part=(alpha.cluster[2,j]-1)*log(fath.data[i,site.index[j]])+(fath.beta[j]-1)*log(1-(fath.data[i,site.index[j]]))-lbeta(alpha.cluster[2,j], fath.beta[j])
+      child.part=(alpha.cluster[3,j]-1)*log(child.data[i,site.index[j]])+(child.beta[j]-1)*log(1-(child.data[i,site.index[j]]))-lbeta(alpha.cluster[3,j], child.beta[j])
+      objec.func=objec.func+exp.mu.cluster[j]*(moth.part+fath.part+child.part)
+     }
+ return(objec.func)
+}
+##################################################
+gll=function(opt.para)
+  {
+   exp.mu.cluster=cluster.data[[1]]      # parameter initials for newton raphson
+   alpha.cluster=cluster.data[[2]]       # alpha & beta are 3 * J_0 matrix with row of order moth, fath, child
+   beta.cluster=cluster.data[[3]]
+   gamma.cluster=cluster.data[[4]]
+   site.index=cluster.data[[5]]
+   num.site=length(site.index)
+   moth.beta=beta.cluster[1,]
+   fath.beta=beta.cluster[2,]
+   child.beta=(alpha.cluster[3,]/exp(opt.para[1]))*(moth.beta/alpha.cluster[1,])^(opt.para[2])*(fath.beta/alpha.cluster[2,])^(opt.para[3])
+   ########### objective function ###########
+   delta.psi.00=numeric(num.site)
+   delta.psi.00=digamma(beta.cluster[3,])-digamma(alpha.cluster[3,]+beta.cluster[3,])
+   partial.gamma0k=0; partial.gamma1k=0; partial.gamma2k=0
+   for (i in 1:no.sub)
+    for (j in 1:num.site)
+     {
+      partial.gamma0k=partial.gamma0k+exp.mu.cluster[j]*(-child.beta[j])*(log(1-child.data[i,site.index[j]])-delta.psi.00[j])
+      partial.gamma1k=partial.gamma1k+exp.mu.cluster[j]*child.beta[j]*log(moth.beta[j]/alpha.cluster[1,j])*(log(1-child.data[i,site.index[j]])-delta.psi.00[j])
+      partial.gamma2k=partial.gamma2k+exp.mu.cluster[j]*child.beta[j]*log(fath.beta[j]/alpha.cluster[2,j])*(log(1-child.data[i,site.index[j]])-delta.psi.00[j])
+     }
+  return(c(partial.gamma0k, partial.gamma1k, partial.gamma2k))
+  }
+##################################################
+moth.data=data.matrix(read.table("NOTonXChromosomewithchCpG_MOData.txt",header=T))   # read data
+fath.data=data.matrix(read.table("NOTonXChromosomewithchCpG_FAData.txt",header=T))
+child.data=data.matrix(read.table("NOTonXChromosomewithchCpG_CHData.txt",header=T))
+no.sub=nrow(moth.data); no.site=ncol(moth.data)
+###############################################   # data simulation
+#no.site=5000;  no.sub=60;
+no.clust=4    #  parameter settings
+coff.para=matrix(nrow=no.clust, ncol=3)
+coff.para[1,]=c(-4.2, 0, 1.3)          # choose the parameters such that the two parameters for children are not far away
+coff.para[2,]=c(-0.7, 1.9, 0)
+coff.para[3,]=c(0.4, 0, 0)
+coff.para[4,]=c(1.4, -1.5, -0.6)
+#
+###############  version 2: each CpG site has its own parameters ##############
+#para.moth=matrix(nrow=no.site, ncol=2)
+#para.fath=matrix(nrow=no.site, ncol=2)
+#para.child=matrix(nrow=no.site, ncol=2)
+#for (i in 1:no.site)                 # genearate  parameters for each site
+#  {
+#   para.moth[i,]=abs(rnorm(2,3,0.1))
+#   para.fath[i,]=abs(rnorm(2,3,0.2))
+#   para.child[i,1]=abs(rnorm(1,3,0.3))
+#  }
+#   for (i in 1:no.site)
+#    #for (j in 1:no.clust)
+#    # if (i>=((j-1)*no.site/no.clust+1) & i<=(j*no.site/no.clust))
+#   {
+#    if (i >=1 & i<=no.site/no.clust)
+#      j=1
+#    if (i >=(1+no.site)/no.clust & i<=2*no.site/no.clust)
+#      j=2
+#    if (i >=(1+2*no.site)/no.clust & i<=3*no.site/no.clust)
+#      j=3
+#    if (i >=(1+3*no.site)/no.clust & i<=4*no.site/no.clust)
+#      j=4
+#       para.child[i,2]=(para.child[i,1]/exp(coff.para[j,1]))*(para.moth[i,2]/para.moth[i,1])^coff.para[j,2]*(para.fath[i,2]/para.fath[i,1])^coff.para[j,3]
+#    }
+#################### calculate mean & variance for mother, father and child ##################
+#moth.var=para.moth[,1]*para.moth[,2]/((para.moth[,1]+para.moth[,2])^2*(para.moth[,1]+para.moth[,2]+1))
+#moth.mean=para.moth[,1]/(para.moth[,1]+para.moth[,2])
+#fath.var=para.fath[,1]*para.fath[,2]/((para.fath[,1]+para.fath[,2])^2*(para.fath[,1]+para.fath[,2]+1))
+#fath.mean=para.fath[,1]/(para.fath[,1]+para.fath[,2])
+#child.var=para.child[,1]*para.child[,2]/((para.child[,1]+para.child[,2])^2*(para.child[,1]+para.child[,2]+1))
+#child.mean=para.child[,1]/(para.child[,1]+para.child[,2])
+###############################################
+cluster.stat=list()
+lkhd.distance=list()
+all.clust=list()
+#################################################
+gamma.true=matrix(nrow=2,ncol=3)
+gamma.true=coff.para
+max.iter=30; num.cluster=6; accu=matrix(nrow=max.iter,ncol=num.cluster)
+sub.btsp=matrix(nrow=max.iter, ncol=no.sub); All.Bic=numeric()
+############# main function ############################
+for (num.iter in 1:max.iter)
+  {
+   subjects=sample(seq(1:no.sub), no.sub, replace=T)         # sample subjects for bootstraping 
+   sub.btsp[num.iter,]=subjects
+   moth.data=moth.data[subjects,]
+   fath.data=fath.data[subjects,]
+   child.data=child.data[subjects,]
+   #############################################
+   #moth.data=matrix(nrow=no.sub,ncol=no.site)
+#   fath.data=matrix(nrow=no.sub,ncol=no.site)
+#   child.data=matrix(nrow=no.sub,ncol=no.site)
+#  ############  version 2: each CpG sites has its own parameter ############
+#     for (i in 1:no.site)
+#       {
+#        moth.data[,i]=rbeta(no.sub, para.moth[i,1], para.moth[i,2])
+#        fath.data[,i]=rbeta(no.sub, para.fath[i,1], para.fath[i,2])
+#        child.data[,i]=rbeta(no.sub, para.child[i,1], para.child[i,2])
+#        for (j in 1:no.sub)
+#          if (child.data[j,i]==1)
+#            child.data[j,i]= child.data[j,i]-threshold
+#       }
+   #############################################
+    result=list()
+    cat("number of iteration=",num.iter, "\n")
+    ############## version 1: Full CpG sites clustering #################
+    #site.order=seq(1:no.site)
+    site.order=sample.int(no.site)       # randomly distribute all sites into num.cluster clusters as equally as possible as the inial
+ #   site.order=read.table("site_order.txt", header=T)[[1]]
+    site.in.cluster=floor(no.site/num.cluster)
+    distribute.site=list()
+    for (i in 1:(num.cluster-1))
+        distribute.site[[i]]=site.order[((i-1)*site.in.cluster+1):(i*site.in.cluster)]
+    distribute.site[[num.cluster]]=site.order[((num.cluster-1)*site.in.cluster+1):no.site]
+    old.exp.mu=matrix(nrow=no.site,ncol=num.cluster)
+    new.exp.mu=matrix(nrow=no.site,ncol=num.cluster)
+    ########## use sample mean and variance to estimate alpha, beta  ########################
+    all.alpha.moth=numeric(); all.beta.moth=numeric()
+    all.alpha.fath=numeric(); all.beta.fath=numeric()
+    all.alpha.child=numeric(); all.beta.child=numeric()
+    for (i in 1:no.site)
+      {
+       all.alpha.moth[i]=abs(mean(moth.data[,i])*(mean(moth.data[,i])*(1-mean(moth.data[,i]))/var(moth.data[,i])-1))
+       all.beta.moth[i]=all.alpha.moth[i]/(mean(moth.data[,i]))-all.alpha.moth[i]
+       all.alpha.fath[i]=mean(fath.data[,i])*(mean(fath.data[,i])*(1-mean(fath.data[,i]))/var(fath.data[,i])-1)
+       all.beta.fath[i]=all.alpha.fath[i]/(mean(fath.data[,i]))-all.alpha.fath[i]
+       all.alpha.child[i]=(mean(child.data[,i])*(mean(child.data[,i])*(1-mean(child.data[,i]))/var(child.data[,i])-1))
+       all.beta.child[i]=(all.alpha.child[i]/(mean(child.data[,i]))-all.alpha.child[i])
+      }
+
+   ################  randomly generate gamma initials ##############
+   all.gamma=matrix(nrow=num.cluster, ncol=3); gamma.new=matrix(nrow=num.cluster, ncol=3)
+   for (i in 1:num.cluster)
+     all.gamma[i,]=rnorm(3)   # use random norm seed to generate coefficient gamma for each cluster as initials
+   gamma.initial=all.gamma
+   #gamma.initial=gamma.true
+
+    psi=numeric(num.cluster)            # this is for psi
+    new.psi=numeric(num.cluster)
+    ###########################
+    threshold=10^(-1); diffe=1; iter=0; new.iter=iter                 # these parameters are for one specific fixed number of clusters
+    gamma.list=list(); all.exp.mu=list(); cond=0
+    all.dist.site=list(); all.diffe=numeric(); all.lkhd=numeric()
+
+#  while(abs(diffe)>threshold)       #  the updated likelihood may be lower than the current
+#   while(diffe>threshold)
+    while(cond==0)
+      {
+       iter=iter+1
+       if(iter==1)
+        {
+         old.likelihood=-1e300
+         all.diffe[iter]=1
+         gamma.list[[iter]]=gamma.initial
+
+         all.lkhd[iter]=-1e300
+         for (i in 1:num.cluster)
+            psi[i]=length(distribute.site[[i]])/no.site
+         }
+ #      if (new.iter>iter)
+        if (iter>1)
+        {
+   #      iter=iter+1
+         all.diffe[iter]=diffe
+         gamma.list[[iter]]=gamma.new
+         all.lkhd[iter]=likelihood
+         old.likelihood=likelihood
+         all.gamma=gamma.new
+         old.exp.mu=new.exp.mu
+         for (i in 1:num.cluster)           # update parameter psi
+           psi[i]=sum(old.exp.mu[,i])/no.site
+        }
+      all.dist.site[[iter]]=distribute.site
+    ######### below is the EM algorithm #########
+ ########################
+    exp.mu=matrix(nrow=no.site,ncol=num.cluster)     # begins the E step, calculate the expectation of latent variable
+    for (j in 1:no.site)
+     {
+      for (k in 1:num.cluster)             # based on the current parameter values, calculate the probability that site j is in cluster k
+          {
+            beta_child=(all.alpha.child[j]/exp(all.gamma[k,1]))*(all.beta.moth[j]/all.alpha.moth[j])^(all.gamma[k,2])*(all.beta.fath[j]/all.alpha.fath[j])^(all.gamma[k,3])
+            if (is.nan(beta_child)==T)
+              beta_child=mean(all.beta.moth[j], all.beta.fath[j])
+            if (beta_child>1e300)
+               beta_child=1e300
+            f_k=1; log.fk=0
+            for (i in 1:no.sub)
+              {
+              ########### original version ##############
+             #  moth.factor=moth.data[i,j]^(all.alpha.moth[j]-1)*(1-moth.data[i,j])^(all.beta.moth[j]-1)/beta(all.alpha.moth[j],all.beta.moth[j])
+             #  fath.factor=fath.data[i,j]^(all.alpha.fath[j]-1)*(1-fath.data[i,j])^(all.beta.fath[j]-1)/beta(all.alpha.fath[j],all.beta.fath[j])
+              # child.factor=child.data[i,j]^(all.alpha.child[j]-1)*(1-child.data[i,j])^(beta_child-1)/beta(all.alpha.child[j],beta_child)
+              # f_k=f_k*(moth.factor*fath.factor*child.factor)
+             #  f_k=f_k*(moth.factor*fath.factor*exp(log.child))
+
+              ####### use logarithm ###############
+              ############version1:  #############
+              log.moth=(all.alpha.moth[j]-1)*log(moth.data[i,j])+(all.beta.moth[j]-1)*log(1-moth.data[i,j])-lbeta(all.alpha.moth[j],all.beta.moth[j])
+              log.fath=(all.alpha.fath[j]-1)*log(fath.data[i,j])+(all.beta.fath[j]-1)*log(1-fath.data[i,j])-lbeta(all.alpha.fath[j],all.beta.fath[j])
+              log.child=(all.alpha.child[j]-1)*log(child.data[i,j])+(beta_child-1)*log(1-child.data[i,j])-lbeta(all.alpha.child[j],beta_child)
+              log.fk=log.fk+(log.moth+log.fath+log.child)
+              }
+            # if (f_k==0)       # avoid underflow
+            #   f_k=1e-320
+           # exp.mu[j,k]=psi[k]*exp(log.fk)                   # this is not normalized.
+              exp.mu[j,k]=log(psi[k])+log.fk
+           }
+   #   aa=-min(exp.mu[j,])
+#      exp.mu[j,]=exp(exp.mu[j,]+aa)/sum(exp(exp.mu[j,]+aa))         # this is the normalizaing step
+  ############ use approximate EM #########################
+      max.value=max(exp.mu[j,])
+      for (k in 1:num.cluster)
+        {
+         if (exp.mu[j,k]!=max.value)
+           exp.mu[j,k]=0
+         if (exp.mu[j,k]==max.value)
+           exp.mu[j,k]=1
+        }
+     }  # end of exp.mu
+    all.exp.mu[[iter]]=exp.mu
+    new.exp.mu=exp.mu
+    for (i in 1:num.cluster)           # update parameter psi
+            new.psi[i]=sum(new.exp.mu[,i])/no.site
+###########################   update latent variables, i.e. the distribution of sites within each cluster based on the new.exp.mu
+site.cluster=numeric()
+    for (i in 1:no.site)                # find the sites within each cluster
+      for (j in 1:num.cluster)
+        if (new.exp.mu[i,j]==max(new.exp.mu[i,]))
+             site.cluster[i]=j
+    distribute.site=list()
+    for (i in 1:num.cluster)
+     {
+      aa=0; bb=numeric()
+      for (j in 1:no.site)
+         if (i==site.cluster[j])
+           {
+            aa=aa+1
+            bb[aa]=j
+           }
+      distribute.site[[i]]=bb           # note that some clusters have null sites
+     }
+##########################                            # begins the M step
+    likelihood=0
+    for (k in 1:num.cluster)      # update beta & gamma cluster by cluster
+     {
+     if (length(distribute.site[[k]])>0)
+      {
+       cat("number of iteration=",num.iter, "\t", k, "th cluster is updating", "\n")
+       site.index=distribute.site[[k]]
+
+       beta.cluster=matrix(nrow=3,ncol=length(site.index))
+       alpha.cluster=matrix(nrow=3,ncol=length(site.index))
+       exp.mu.cluster=numeric(length(site.index))
+      # gamma.cluster=all.gamma[k,]
+       new.data=matrix(nrow=length(site.index),ncol=3)
+        for (j in 1:length(site.index))
+         {
+################# version 1: full CpG clustering ##############
+          new.data[j,1]=mean(logit(child.data[,site.index[j]]))
+          new.data[j,2]=mean(logit(moth.data[,site.index[j]]))
+          new.data[j,3]=mean(logit(fath.data[,site.index[j]]))
+
+          exp.mu.cluster[j]=exp.mu[site.index[j],k]      # extract all data to be used within one cluster
+
+          alpha.cluster[1,j]=all.alpha.moth[site.index[j]]
+          alpha.cluster[2,j]=all.alpha.fath[site.index[j]]
+          alpha.cluster[3,j]=all.alpha.child[site.index[j]]
+
+          beta.cluster[1,j]=alpha.cluster[1,j]/mean(moth.data[,site.index[j]])-alpha.cluster[1,j]
+          beta.cluster[2,j]=alpha.cluster[2,j]/mean(fath.data[,site.index[j]])-alpha.cluster[2,j]
+         }
+       ################## use OLS estimate as initials ##############
+       if (nrow(new.data)>2)
+         {
+          fit=lm(new.data[,1]~ new.data[,2]+new.data[,3])
+          gamma.cluster=coefficients(fit)
+         }
+       if (nrow(new.data)<=2)
+         gamma.cluster=all.gamma[k,]
+
+       cluster.data=list()
+       cluster.data[[1]]=exp.mu.cluster
+       cluster.data[[2]]=alpha.cluster
+       cluster.data[[3]]=beta.cluster
+       cluster.data[[4]]=gamma.cluster
+       cluster.data[[5]]=site.index
+       opt.para=gamma.cluster
+      # opt.para[1]=0
+
+       NR.output=optim(opt.para,h_func,gll, method="BFGS", control=list(fnscale=-1))  # reltol=1e-5
+       gamma.cluster=NR.output$par    # this is updated gamma
+       beta.cluster[3,]=(alpha.cluster[3,]/exp(gamma.cluster[1]))*(beta.cluster[1,]/alpha.cluster[1,])^(gamma.cluster[2])*(beta.cluster[2,]/alpha.cluster[2,])^(gamma.cluster[3])
+
+       gamma.new[k,]=gamma.cluster
+       #########################################   Calculate the likelihood    #######################
+        alpha.moth=alpha.cluster[1,]
+        alpha.fath=alpha.cluster[2,]
+        alpha.child=alpha.cluster[3,]
+        beta.moth=beta.cluster[1,]
+        beta.fath=beta.cluster[2,]
+        beta.child=beta.cluster[3,]
+
+       phi.mle=sum(new.exp.mu[,k])/no.site             # p_k for the kth cluster
+
+       l1=0
+       l2=0; moth.part=0; fath.part=0; child.part=0
+       for (ii in 1:no.sub)
+         for (jj in 1:length(site.index))     # note the site indexing when do group by group   very important
+              {
+               moth.part=(alpha.moth[jj]-1)*log(moth.data[ii,site.index[jj]])+(beta.moth[jj]-1)*log(1-moth.data[ii,site.index[jj]])-lbeta(alpha.moth[jj],beta.moth[jj])
+               fath.part=(alpha.fath[jj]-1)*log(fath.data[ii,site.index[jj]])+(beta.fath[jj]-1)*log(1-fath.data[ii,site.index[jj]])-lbeta(alpha.fath[jj],beta.fath[jj])
+               child.part=(alpha.child[jj]-1)*log(child.data[ii,site.index[jj]])+(beta.child[jj]-1)*log(1-child.data[ii,site.index[jj]])-lbeta(alpha.child[jj],beta.child[jj])
+               l2=l2+exp.mu.cluster[jj]*(moth.part+fath.part+child.part)
+
+
+               l1=l1+exp.mu.cluster[jj]*log(phi.mle)
+              }
+        l1=l1/no.sub      
+       likelihood=likelihood+(l1+l2)
+       ##########################################
+      }
+      if (length(distribute.site[[k]])==0)        # no sites in this cluster
+       gamma.new[k,]=0
+    }    # end of k
+    diffe=likelihood-old.likelihood
+    if (abs(diffe)<threshold || iter>=100)
+      cond=1
+   # if (diffe>0)
+#       new.iter=iter+1
+#    if (diffe<=0)
+#       new.iter=iter
+    cat(iter, "th EM iteration", "\t", "new likelihood-old likelihood =", diffe, "\n")
+   }  # end of while
+result[[1]]=num.cluster
+result[[2]]=distribute.site
+result[[3]]=gamma.new
+result[[4]]=likelihood
+bic=-2*likelihood+(5*no.site+4*num.cluster-1)*log(3*no.sub*no.site)
+All.Bic[num.iter]=bic
+
+cluster.stat[[num.iter]]=result
+lkhd.distance[[num.iter]]=all.lkhd
+all.clust[[num.iter]]=all.dist.site
+} # end of num.iter
+##############
+end.time=date()
+cat("program ends at", date(),"\n\n")
+time.spent<-proc.time()-ptm
+save(list=ls(),file="Bootstrap(1-30)_6cluster.RData")
+##################### end of the programm ###############################
