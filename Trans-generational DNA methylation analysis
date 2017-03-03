@@ -1,3 +1,5 @@
+# this code is for analyzing real data with bootstrap at the very outside loop. 
+
 rm(list=ls())
 start.time=date()
 cat("program starts at", date(),"\n\n")
