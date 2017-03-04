@@ -7,7 +7,7 @@ ptm <- proc.time()
 library(car)
 library(Rsolnp)
 ##################################################
-h_func=function(opt.para)
+h_func=function(opt.para) # this is the objective function to be optimized(either maximization or minimization), should output a scalar.  
 {
    exp.mu.cluster=cluster.data[[1]]      # parameter initials for newton raphson
    alpha.cluster=cluster.data[[2]]       # alpha & beta are 3 * J_0 matrix with row of order moth, fath, child
@@ -18,7 +18,7 @@ h_func=function(opt.para)
    moth.beta=beta.cluster[1,]
    fath.beta=beta.cluster[2,]
   # opt.para[1]=0
-   child.beta=(alpha.cluster[3,]/exp(opt.para[1]))*(moth.beta/alpha.cluster[1,])^(opt.para[2])*(fath.beta/alpha.cluster[2,])^(opt.para[3])
+   child.beta=(alpha.cluster[3,]/exp(opt.para[1]))*(moth.beta/alpha.cluster[1,])^(opt.para[2])*(fath.beta/alpha.cluster[2,])^(opt.para[3]) # this reflects the constraint among gamma's
    ##############  objective function ########################
   objec.func=0
   for (i in 1:no.sub)
@@ -32,7 +32,7 @@ h_func=function(opt.para)
  return(objec.func)
 }
 ##################################################
-gll=function(opt.para)
+gll=function(opt.para) # this is the partial derivative functions w.r.s gamma's
   {
    exp.mu.cluster=cluster.data[[1]]      # parameter initials for newton raphson
    alpha.cluster=cluster.data[[2]]       # alpha & beta are 3 * J_0 matrix with row of order moth, fath, child
