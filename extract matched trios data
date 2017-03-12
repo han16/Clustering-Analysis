@@ -1,0 +1,286 @@
+############
+# extract matched triads from batch 1,2,3,4,5 which are all cleaned data 
+############
+Cleaned_batch1=read.csv("MethProjIoW1_245CpGSamples_cleaned.csv", header=T)
+Cleaned_batch2=read.csv("MethProjIoW2_141CpgSamples_cleaned.csv", header=T)
+Cleaned_batch3=read.csv("MethProjIoW3_221CpGSamples_cleaned.csv", header=T)
+Cleaned_batch4=read.csv("MethProjIoW4_93CpgSamples_cleaned.csv", header=T)
+Cleaned_batch5=read.csv("MethProjIoW5_63CpGSamples_4ctrl_cleaned.csv", header=T)
+Common_CpG_ID=intersect(intersect(intersect(rownames(Cleaned_batch1), rownames(Cleaned_batch2)), rownames(Cleaned_batch3)), rownames(Cleaned_batch4))
+library(cwhmisc)
+###################
+###################
+new.batch2=data.matrix(Cleaned_batch2[Common_CpG_ID,])
+CH_batch2=matrix(0,nrow=nrow(new.batch2),ncol=ncol(new.batch2)); CH2_name=numeric()
+MO_batch2=matrix(0,nrow=nrow(new.batch2),ncol=ncol(new.batch2)); MO2_name=numeric()
+FA_batch2=matrix(0,nrow=nrow(new.batch2),ncol=ncol(new.batch2)); FA2_name=numeric()
+ii=1; jj=1; kk=1
+for (i in 1:ncol(new.batch2))
+ {
+  if (is.numeric(cpos(colnames(new.batch2)[i], "CH"))==T)
+      {
+       CH_batch2[,ii]=new.batch2[,i]
+       CH2_name[ii]=colnames(new.batch2)[i]
+       ii=ii+1
+      }
+  if (is.numeric(cpos(colnames(new.batch2)[i], "MO"))==T)
+      {
+       MO_batch2[,kk]=new.batch2[,i]
+       MO2_name[kk]=colnames(new.batch2)[i]
+       kk=kk+1
+      }
+  if (is.numeric(cpos(colnames(new.batch2)[i], "FA"))==T)
+      {
+       FA_batch2[,jj]=new.batch2[,i]
+       FA2_name[jj]=colnames(new.batch2)[i]
+       jj=jj+1
+      }
+  }
+CH_batch2 <- CH_batch2[,which(!apply(CH_batch2==0,2,all))]  # remove columns with all entries being 0
+CH_batch2=t(CH_batch2)
+MO_batch2 <- MO_batch2[,which(!apply(MO_batch2==0,2,all))]  # remove columns with all entries being 0
+MO_batch2=t(MO_batch2)
+FA_batch2 <- FA_batch2[,which(!apply(FA_batch2==0,2,all))]  # remove columns with all entries being 0
+FA_batch2=t(FA_batch2)
+###########################
+new.batch3=data.matrix(Cleaned_batch3[Common_CpG_ID,])
+CH_batch3=matrix(0,nrow=nrow(new.batch3),ncol=ncol(new.batch3));CH3_name=numeric()
+MO_batch3=matrix(0,nrow=nrow(new.batch3),ncol=ncol(new.batch3));MO3_name=numeric()
+FA_batch3=matrix(0,nrow=nrow(new.batch3),ncol=ncol(new.batch3));FA3_name=numeric()
+ii=1; jj=1; kk=1
+for (i in 1:ncol(new.batch3))
+ {
+  if (is.numeric(cpos(colnames(new.batch3)[i], "CH"))==T)
+      {
+       CH_batch3[,ii]=new.batch3[,i]
+       CH3_name[ii]=colnames(new.batch3)[i]
+       ii=ii+1
+      }
+  if (is.numeric(cpos(colnames(new.batch3)[i], "MO"))==T)
+      {
+       MO_batch3[,kk]=new.batch3[,i]
+       MO3_name[kk]=colnames(new.batch3)[i]
+       kk=kk+1
+      }
+   if (is.numeric(cpos(colnames(new.batch3)[i], "FA"))==T)
+      {
+       FA_batch3[,jj]=new.batch3[,i]
+       FA3_name[jj]=colnames(new.batch3)[i]
+       jj=jj+1
+      }
+  }
+CH_batch3 <- CH_batch3[,which(!apply(CH_batch3==0,2,all))]  # remove columns with all entries being 0
+CH_batch3=t(CH_batch3)
+MO_batch3 <- MO_batch3[,which(!apply(MO_batch3==0,2,all))]  # remove columns with all entries being 0
+MO_batch3=t(MO_batch3)
+FA_batch3 <- FA_batch3[,which(!apply(FA_batch3==0,2,all))]  # remove columns with all entries being 0
+FA_batch3=t(FA_batch3)
+##############################
+new.batch4=data.matrix(Cleaned_batch4[Common_CpG_ID,])
+CH_batch4=matrix(0,nrow=nrow(new.batch4),ncol=ncol(new.batch4)); CH4_name=numeric()
+MO_batch4=matrix(0,nrow=nrow(new.batch4),ncol=ncol(new.batch4)); MO4_name=numeric()
+FA_batch4=matrix(0,nrow=nrow(new.batch4),ncol=ncol(new.batch4)); FA4_name=numeric()
+#name4=colnames(Cleaned_batch4)
+name4=read.csv("Sample list batch4 06032103 (GAL).csv",header=T, stringsAsFactors=FALSE)[,2]  # use long ID's 
+ii=1; jj=1; kk=1
+for (i in 1:ncol(new.batch4))
+ {
+  if (is.numeric(cpos(name4[i], "CH"))==T)
+    {
+     CH4_name[ii]=name4[i]
+     CH_batch4[,ii]=new.batch4[,i]
+     ii=ii+1
+    }
+  if (is.numeric(cpos(name4[i], "MO"))==T )
+    {
+     MO4_name[kk]=name4[i]
+     MO_batch4[,kk]=new.batch4[,i]
+     kk=kk+1
+    }
+  if (is.numeric(cpos(name4[i], "FA"))==T)
+    {
+     FA4_name[jj]=name4[i]
+     FA_batch4[,jj]=new.batch4[,i]
+     jj=jj+1
+    }
+  }
+ CH_batch4 <- t(CH_batch4[,which(!apply(CH_batch4==0,2,all))])  # remove columns with all entries being 0
+ MO_batch4 <- t(MO_batch4[,which(!apply(MO_batch4==0,2,all))])
+ FA_batch4 <- t(FA_batch4[,which(!apply(FA_batch4==0,2,all))])
+#################### 
+new.batch5=data.matrix(Cleaned_batch5[Common_CpG_ID,])
+CH_batch5=matrix(0,nrow=nrow(new.batch5),ncol=ncol(new.batch5)); CH5_name=numeric()
+MO_batch5=matrix(0,nrow=nrow(new.batch5),ncol=ncol(new.batch5)); MO5_name=numeric()
+FA_batch5=matrix(0,nrow=nrow(new.batch5),ncol=ncol(new.batch5)); FA5_name=numeric()
+name5=colnames(Cleaned_batch5)
+ii=1; jj=1; kk=1
+for (i in 1:ncol(new.batch5))
+ {
+  if (is.numeric(cpos(name5[i], "CH"))==T)
+    {
+     CH5_name[ii]=name5[i]
+     CH_batch5[,ii]=new.batch5[,i]
+     ii=ii+1
+    }
+  if (is.numeric(cpos(name5[i], "MO"))==T || nchar(name5[i])<=5)
+    {
+     MO5_name[kk]=name5[i]
+     MO_batch5[,kk]=new.batch5[,i]
+     kk=kk+1
+    }
+  if (is.numeric(cpos(name5[i], "FA"))==T)
+    {
+     FA5_name[jj]=name5[i]
+     FA_batch5[,jj]=new.batch5[,i]
+     jj=jj+1
+    }
+  }
+ CH_batch5 <- t(CH_batch5[,which(!apply(CH_batch5==0,2,all))])  # remove columns with all entries being 0
+ MO_batch5 <- t(MO_batch5[,which(!apply(MO_batch5==0,2,all))])
+ FA_batch5 <- t(FA_batch5[,which(!apply(FA_batch5==0,2,all))])
+###########################
+All_CH=rbind(rbind(rbind(CH_batch2, CH_batch3), CH_batch4), CH_batch5)
+All_MO=rbind(rbind(rbind(rbind(t(Cleaned_batch1[Common_CpG_ID,]),MO_batch2),MO_batch3),MO_batch4), MO_batch5)
+All_FA=rbind(rbind(rbind(FA_batch2, FA_batch3), FA_batch4), FA_batch5)
+
+All_CH_name=c(CH2_name, CH3_name, CH4_name, CH5_name)
+All_MO_name=c(colnames(Cleaned_batch1), MO2_name, MO3_name, MO4_name, MO5_name)
+All_FA_name=c(FA2_name, FA3_name, FA4_name, FA5_name)
+###########################
+matched_CH=matrix(0, nrow=nrow(All_CH),ncol=ncol(All_CH))
+matched_CH_name=numeric(); ii=1
+matched_MO=matrix(0, nrow=nrow(All_CH),ncol=ncol(All_CH))
+matched_MO_name=numeric()
+matched_FA=matrix(0, nrow=nrow(All_CH),ncol=ncol(All_CH))
+matched_FA_name=numeric(); MO_dup=list()
+for (i in 1:length(All_CH_name))
+#  if (is.numeric(cpos(All_CH_name[i], "NONE"))==F)    # both father and mother shoud have ID's
+    {
+     cat(i, "th child is matching", "\n")
+     if (substr(All_CH_name[i], 1,1)=="X")
+       {
+        FA_id=substr(All_CH_name[i],2,15)
+        MO_id2=substr(All_CH_name[i],2,15)
+        if(substr(All_CH_name[i], 7,7)=="0" &substr(All_CH_name[i], 8,8)!="0")
+           MO_id=substr(All_CH_name[i],8,10)
+        if(substr(All_CH_name[i], 7,7)=="0" &substr(All_CH_name[i], 8,8)=="0" & substr(All_CH_name[i], 9,9)!="0")
+           MO_id=substr(All_CH_name[i],9,10)
+        if(substr(All_CH_name[i], 7,7)=="0" &substr(All_CH_name[i], 8,8)=="0" & substr(All_CH_name[i], 9,9)=="0" & substr(All_CH_name[i], 10,10)!="0")
+           MO_id=substr(All_CH_name[i],10,10)
+        if(substr(All_CH_name[i], 7,7)!="0")
+           MO_id=substr(All_CH_name[i],7,10)
+       }
+     if (substr(All_CH_name[i], 1,1)!="X")
+       {
+        FA_id=substr(All_CH_name[i],1,14)
+        MO_id2=substr(All_CH_name[i],1,14)
+        if(substr(All_CH_name[i], 6,6)=="0")
+           MO_id=substr(All_CH_name[i],7,9)
+        if(substr(All_CH_name[i], 6,6)!="0")
+           MO_id=substr(All_CH_name[i],6,9)
+
+        if(substr(All_CH_name[i], 6,6)=="0" &substr(All_CH_name[i], 7,7)!="0")
+           MO_id=substr(All_CH_name[i],7,9)
+        if(substr(All_CH_name[i], 6,6)=="0" &substr(All_CH_name[i], 7,7)=="0" & substr(All_CH_name[i], 8,8)!="0")
+           MO_id=substr(All_CH_name[i],8,9)
+        if(substr(All_CH_name[i], 6,6)=="0" &substr(All_CH_name[i], 7,7)=="0" & substr(All_CH_name[i], 8,8)=="0" & substr(All_CH_name[i], 9,9)!="0")
+           MO_id=substr(All_CH_name[i],9,9)
+        if(substr(All_CH_name[i], 6,6)!="0")
+           MO_id=substr(All_CH_name[i],6,9)
+       }
+     jj=0; dd=numeric(); nn=0    # find mother with duplicate mesures for early pre and late pre
+     for ( j in 1:length(All_MO_name))   ## find matched mother
+       {
+       if (j <=length(colnames(Cleaned_batch1)) & substr(All_MO_name[j], 2, nchar(All_MO_name[j]))==MO_id)
+         {
+          jj=j
+          nn=nn+1
+          dd[nn]=All_MO_name[j]
+         }
+       if (j>length(colnames(Cleaned_batch1)))
+         {
+         if (substr(All_MO_name[j], 1,1)=="X" & MO_id2==substr(All_MO_name[j],2,15))
+           {
+            jj=j
+            nn=nn+1
+            dd[nn]=All_MO_name[j]
+           }
+         if (substr(All_MO_name[j], 1,1)!="X" & MO_id2==substr(All_MO_name[j],1,14))
+           {
+            jj=j
+            nn=nn+1
+            dd[nn]=All_MO_name[j]
+           }
+         }
+       }
+     kk=0
+     for ( k in 1:length(All_FA_name)) ## find matched father
+       {
+       if (substr(All_FA_name[k], 1,1)=="X" & FA_id==substr(All_FA_name[k],2,15))
+         kk=k
+       if (substr(All_FA_name[k], 1,1)!="X" & FA_id==substr(All_FA_name[k],1,14))
+         kk=k
+       }
+    if (jj*kk!=0)
+      {
+       MO_dup[[ii]]=dd
+       matched_CH[ii,]=All_CH[i,];  matched_CH_name[ii]=All_CH_name[i]
+       matched_MO[ii,]=All_MO[jj,]; matched_MO_name[ii]=All_MO_name[jj]
+       matched_FA[ii,]=All_FA[kk,]; matched_FA_name[ii]=All_FA_name[kk]
+       ii=ii+1
+      }
+
+    }
+matched_CH=matched_CH[ apply(matched_CH!=0, 1, any), , drop=FALSE]
+matched_MO=matched_MO[ apply(matched_MO!=0, 1, any), , drop=FALSE]
+matched_FA=matched_FA[ apply(matched_FA!=0, 1, any), , drop=FALSE]
+####################     add another 5 triads  #######################
+row.matched=nrow(matched_CH); col.matched=ncol(matched_CH)
+new.matched_CH=matrix(nrow=(row.matched+5), ncol=col.matched)
+new.matched_CH[1:row.matched,]=matched_CH
+new.matched_FA=matrix(nrow=(row.matched+5), ncol=col.matched)
+new.matched_FA[1:row.matched,]=matched_FA
+new.matched_MO=matrix(nrow=(row.matched+5), ncol=col.matched)
+new.matched_MO[1:row.matched,]=matched_MO
+new.matched_CH_name=numeric(row.matched+5); new.matched_CH_name[1:row.matched]=matched_CH_name
+new.matched_MO_name=numeric(row.matched+5); new.matched_MO_name[1:row.matched]=matched_MO_name
+new.matched_FA_name=numeric(row.matched+5); new.matched_FA_name[1:row.matched]=matched_FA_name
+
+new.matched_CH_name[row.matched+1]="0077_0439_2072_CH_B_EDTA"     # the first really matched triad but with discrepancies
+new.matched_FA_name[row.matched+1]="0077_0439_2072_FA_NA_EDTA"
+new.matched_MO_name[row.matched+1]="0077_0439_2030_MO_L_EDTA"
+
+new.matched_CH_name[row.matched+2]="0096_1332_2005_CH_B_EDTA"
+new.matched_FA_name[row.matched+2]="0011_1332_2005_FA_N_EDTA"
+new.matched_MO_name[row.matched+2]="0096_1332_2005_MO_L_EDTA"
+
+new.matched_CH_name[row.matched+3]="0133_0609_2012_CH_CB_EDTA"
+new.matched_FA_name[row.matched+3]="0026_0609_2012_FA_N_EDTA"
+new.matched_MO_name[row.matched+3]="0133_0609_2012_MO_E"
+
+new.matched_CH_name[row.matched+4]="0136_1502_2031_CH_CB_EDTA"
+new.matched_FA_name[row.matched+4]="0080_1502_2031_FA_N_EDTA"
+new.matched_MO_name[row.matched+4]="0136_1502_2031_MO_36_EDTA"
+
+new.matched_CH_name[row.matched+5]="0146_2068_0211_CH_CB_EDTA"
+new.matched_FA_name[row.matched+5]="0145_2068_0211_FA_N"
+new.matched_MO_name[row.matched+5]="0145_2068_0211_MO_28_EDTA"
+
+for (i in (row.matched+1):(row.matched+1))
+  {
+   for (ii in 1:length(All_CH_name))
+     if (is.numeric(cpos(All_CH_name[ii], new.matched_CH_name[i]))==T)
+       new.matched_CH[i,]=All_CH[ii,]
+
+   for (jj in 1:length(All_MO_name))
+    if (is.numeric(cpos(All_MO_name[jj], new.matched_MO_name[i]))==T)
+       new.matched_MO[i,]=All_MO[jj,]
+
+   for (kk in 1:length(All_FA_name))
+     if (is.numeric(cpos(All_FA_name[kk], new.matched_FA_name[i]))==T)
+       new.matched_FA[i,]=All_FA[kk,]
+   for (j in 1:ncol(new.matched_CH))
+     if (is.na(new.matched_CH[i,j])==T ||is.na(new.matched_MO[i,j])==T|| is.na(new.matched_FA[i,j])==T)
+      cat("there is NA", "\t", "i=", i,"\t",  "j=", j, "\n")
+  }
+  
